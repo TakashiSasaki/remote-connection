@@ -51,7 +51,9 @@ History
 ================================================================================
 */
 
-function piesocketModule(ClusterID, serviceToken, defaultChannelName) {
+function piesocketModule(ClusterID, serviceToken) {
+    if (typeof serviceToken !== "string") throw "serviceToken is mandatory.";
+  
     var socket;
     if (!ClusterID) {
       ClusterID = "demo";
@@ -74,9 +76,8 @@ function piesocketModule(ClusterID, serviceToken, defaultChannelName) {
       });
     }
     async function subscribe(channelName) {
-      if (!channelName) {
-        channelName = defaultChannelName;
-      }
+      if (typeof channelName !== "string") throw "channelName is mandatory.";
+  
       await open(channelName);
       console.log("piesocketModule:channelOpened");
       function onmessage(cbFunc) {

@@ -36,78 +36,80 @@ History
 
 2020/06/15 : 1st draft
 2020/06/29 : onmessage(cbfunc) -> onmessage=cbfunc(message)
-             message.data,.origin,.timeStamp
+			 message.data,.origin,.timeStamp
 2021/09/01 : support ESModule and Node.js websocket lib
-           for Browsers
-             import {RelayServer} from "./RelayServer.js";
-             relay = RelayServer("achex", "chirimenSocket" );
-           for Node.js
-             import WSLib from "websocket";
-             import {RelayServer} from "./RelayServer.js";
-             relay = RelayServer("achex", "chirimenSocket" , WSLib, "https://chirimen.org");
+		   for Browsers
+			 import {RelayServer} from "./RelayServer.js";
+			 relay = RelayServer("achex", "chirimenSocket" );
+		   for Node.js
+			 import WSLib from "websocket";
+			 import {RelayServer} from "./RelayServer.js";
+			 relay = RelayServer("achex", "chirimenSocket" , WSLib, "https://chirimen.org");
 2021/09/02 : websocketin->piesocket
 2021/10/18 : piesocket : RelayServer("[ClusterID].piesocket","[TOKEN]")
 2022/10/07 : add tinyWssModule for https://github.com/chirimen-oh/chirimen-web-socket-relay and its heroku deployment (chirimentiny)
 ================================================================================
 */
 
-function scaledroneModule(serviceToken, defaultChannelName) {
+function scaledroneModule(serviceToken) {
+    if(typeof serviceToken !== "string") throw "serviceToken is mandatory.";
+    
     var drone, room;
     var clientId;
     var sdUrl;
     function open(channelName) {
-        drone = new Scaledrone(serviceToken);
-        room = drone.subscribe(channelName);
-        return new Promise(function (okCallback, ngCallback) {
-            room.on("open", function (error) {
-                if (error) {
-                    ngCallback(error);
-                }
-                clientId = drone.clientId;
-                sdUrl = new URL(drone.connection.url);
-                //					console.log("connected: clientId:",clientId);
-                okCallback(true);
-            });
+      drone = new Scaledrone(serviceToken);
+      room = drone.subscribe(channelName);
+      return new Promise(function (okCallback, ngCallback) {
+        room.on("open", function (error) {
+          if (error) {
+            ngCallback(error);
+          }
+          clientId = drone.clientId;
+          sdUrl = new URL(drone.connection.url);
+          //					console.log("connected: clientId:",clientId);
+          okCallback(true);
         });
+      });
     }
     async function subscribe(channelName) {
-        if (!channelName) {
-            channelName = defaultChannelName;
-        }
-        await open(channelName);
-        console.log("scaledroneModule:channelOpened");
-        function onmessage(cbFunc) {
-            room.on("message", function (message) {
-                //					console.log('Received data:', message);
-                // 自分が送ったものは返さないようにね
-                if (message.clientId != clientId) {
-                    cbFunc({
-                        data: message.data,
-                        timeStamp: message.timestamp,
-                        origin: sdUrl.origin,
-                        //							lastEventId: message.id
-                    });
-                }
+      if (typeof channelName !== "string") throw "channelName is mandatory.";
+  
+      await open(channelName);
+      console.log("scaledroneModule:channelOpened");
+      function onmessage(cbFunc) {
+        room.on("message", function (message) {
+          //					console.log('Received data:', message);
+          // 自分が送ったものは返さないようにね
+          if (message.clientId != clientId) {
+            cbFunc({
+              data: message.data,
+              timeStamp: message.timestamp,
+              origin: sdUrl.origin,
+              //							lastEventId: message.id
             });
-        }
-        function send(msg) {
-            drone.publish({
-                room: channelName,
-                //					message: {body:msg}
-                message: msg,
-            });
-        }
-        return {
-            serverName: "scaledrone",
-            set onmessage(cbf) {
-                onmessage(cbf);
-            },
-            send: send,
-        };
+          }
+        });
+      }
+      function send(msg) {
+        drone.publish({
+          room: channelName,
+          //					message: {body:msg}
+          message: msg,
+        });
+      }
+      return {
+        serverName: "scaledrone",
+        set onmessage(cbf) {
+          onmessage(cbf);
+        },
+        send: send,
+      };
     }
     return {
-        subscribe: subscribe,
+      subscribe: subscribe,
     };
-} //function scaledroneModule
-
-export { scaledroneModule };
+  } //function scaledroneModule
+  
+  export { scaledroneModule };
+  
