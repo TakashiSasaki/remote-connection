@@ -81,6 +81,7 @@ const defaultChannelName = "chirimenChannel";
 
 import { tinyWssModule } from "./tinyWssModule.js";
 import { piesocketModule } from "./piesocketModule.js";
+import {scaledroneModule} from "./scaledroneModule.js";
 
 function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
   if (typeof window == "undefined") {
@@ -134,64 +135,6 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
     return tinyWssModule(wssRelayHost, serviceToken, defaultChannelName);
   }
 
-  function scaledroneModule() {
-    var drone, room;
-    var clientId;
-    var sdUrl;
-    function open(channelName) {
-      drone = new Scaledrone(serviceToken);
-      room = drone.subscribe(channelName);
-      return new Promise(function (okCallback, ngCallback) {
-        room.on("open", function (error) {
-          if (error) {
-            ngCallback(error);
-          }
-          clientId = drone.clientId;
-          sdUrl = new URL(drone.connection.url);
-          //					console.log("connected: clientId:",clientId);
-          okCallback(true);
-        });
-      });
-    }
-    async function subscribe(channelName) {
-      if (!channelName) {
-        channelName = defaultChannelName;
-      }
-      await open(channelName);
-      console.log("scaledroneModule:channelOpened");
-      function onmessage(cbFunc) {
-        room.on("message", function (message) {
-          //					console.log('Received data:', message);
-          // 自分が送ったものは返さないようにね
-          if (message.clientId != clientId) {
-            cbFunc({
-              data: message.data,
-              timeStamp: message.timestamp,
-              origin: sdUrl.origin,
-              //							lastEventId: message.id
-            });
-          }
-        });
-      }
-      function send(msg) {
-        drone.publish({
-          room: channelName,
-          //					message: {body:msg}
-          message: msg,
-        });
-      }
-      return {
-        serverName: "scaledrone",
-        set onmessage(cbf) {
-          onmessage(cbf);
-        },
-        send: send,
-      };
-    }
-    return {
-      subscribe: subscribe,
-    };
-  } //function scaledroneModule
 
   function achexModule() {
     var socket;
