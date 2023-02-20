@@ -77,8 +77,6 @@ interface  RSMessage {
 
 **/
 
-const defaultChannelName = "chirimenChannel";
-
 import { tinyWssModule } from "./tinyWssModule.js";
 import { piesocketModule } from "./piesocketModule.js";
 import { scaledroneModule } from "./scaledroneModule.js";
@@ -100,7 +98,7 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
   }
 
   var serviecs = {
-    achex: achexModule,
+    achex: (serviceToken) => achexModule(serviceToken),
     //		"websocket.in" : websocketInModule,
     //		websocketin : websocketInModule,
     piesocket: piesocketModule,
@@ -109,11 +107,10 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
     chirimentest: (serviceToken) =>
       tinyWssModule(
         "wss://chirimen-web-socket-relay.herokuapp.com",
-        serviceToken,
-        defaultChannelName
+        serviceToken
       ),
     chirimentestlocal: (serviceToken) =>
-      tinyWssModule("ws://localhost:3000", serviceToken, defaultChannelName),
+      tinyWssModule("ws://localhost:3000", serviceToken),
   };
 
   var relayService;
@@ -126,13 +123,12 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
       sn = sn.substring(sn.lastIndexOf(".") + 1);
       relayService = serviecs[sn](subSn);
     } else {
-      relayService = serviecs[serviceName.toLowerCase()]();
+      relayService = serviecs[serviceName.toLowerCase()](serviceToken);
     }
   } else {
     // 別途規定されたリレーサービスを組み込める？
     relayService = serviceName;
   }
-  //	console.log("relayService:",relayService);
 
   return {
     subscribe: relayService.subscribe,

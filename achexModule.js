@@ -77,7 +77,9 @@ interface  RSMessage {
 
 **/
 
-function achexModule(serviceToken, defaultChannelName) {
+function achexModule(serviceToken) {
+    if (typeof serviceToken !== "string") throw "serviceToken is mandatory.";
+  
     var socket;
     var SID; // サービスから割り付けられるセッションID
     var userName = "chirimenUser";
@@ -94,12 +96,10 @@ function achexModule(serviceToken, defaultChannelName) {
           okCallback(true);
         });
       });
-    }
+    } //function open
   
     async function subscribe(channelName) {
-      if (!channelName) {
-        channelName = defaultChannelName;
-      }
+      if (typeof channelName !== "string") throw "channelName is mandatory.";
       await open(channelName);
       console.log("achexModule:channelOpened");
       function onmessage(cbFunc) {
@@ -138,7 +138,7 @@ function achexModule(serviceToken, defaultChannelName) {
         },
         send: send,
       };
-    }
+    } //async function subscribe
     //		await open();
   
     return {

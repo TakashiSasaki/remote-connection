@@ -51,7 +51,10 @@ History
 ================================================================================
 */
 
-function tinyWssModule(wssRelayHost, serviceToken, defaultChannelName) {
+function tinyWssModule(wssRelayHost, serviceToken) {
+    if(typeof wssRelayHost !== "string") throw "wssRelayHost is mandatory.";
+    if(typeof serviceToken !== "string") throw "serviceToken is mandatory.";
+    
     function openWSS(wssUrl) {
       var socket = new WebSocket(wssUrl);
       return new Promise(function (okCallback, ngCallback) {
@@ -62,9 +65,8 @@ function tinyWssModule(wssRelayHost, serviceToken, defaultChannelName) {
     }
   
     async function subscribe(channelName) {
-      if (!channelName) {
-        channelName = defaultChannelName;
-      }
+      if(typeof channelName !== "string") throw "channelName is mandatory.";
+  
       var socket = await openWSS(
         wssRelayHost + "/" + serviceToken + "/" + channelName
       );
