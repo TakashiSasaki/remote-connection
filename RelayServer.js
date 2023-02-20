@@ -82,6 +82,7 @@ const defaultChannelName = "chirimenChannel";
 import { tinyWssModule } from "./tinyWssModule.js";
 import { piesocketModule } from "./piesocketModule.js";
 import { scaledroneModule } from "./scaledroneModule.js";
+import { achexModule } from "./achexModule.js";
 
 function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
   if (typeof window == "undefined") {
@@ -97,6 +98,7 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
   if (!serviceName || !serviceToken || typeof serviceToken != "string") {
     return null;
   }
+
   var serviecs = {
     achex: achexModule,
     //		"websocket.in" : websocketInModule,
@@ -104,9 +106,16 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
     piesocket: piesocketModule,
     scaledrone: scaledroneModule,
     wss: tinyWssModule,
-    chirimentest: chirimenTest,
-    chirimentestlocal: chirimenTestLocal,
+    chirimentest: (serviceToken) =>
+      tinyWssModule(
+        "wss://chirimen-web-socket-relay.herokuapp.com",
+        serviceToken,
+        defaultChannelName
+      ),
+    chirimentestlocal: (serviceToken) =>
+      tinyWssModule("ws://localhost:3000", serviceToken, defaultChannelName),
   };
+
   var relayService;
   if (typeof serviceName == "string") {
     if (serviceName.indexOf("wss://") == 0) {
@@ -124,85 +133,6 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
     relayService = serviceName;
   }
   //	console.log("relayService:",relayService);
-  function chirimenTestLocal() {
-    var wssRelayHost = "ws://localhost:3000";
-    return tinyWssModule(wssRelayHost, serviceToken, defaultChannelName);
-  }
-
-  function chirimenTest() {
-    var wssRelayHost = "wss://chirimen-web-socket-relay.herokuapp.com";
-    return tinyWssModule(wssRelayHost, serviceToken, defaultChannelName);
-  }
-
-  function achexModule() {
-    var socket;
-    var SID; // サービスから割り付けられるセッションID
-    var userName = "chirimenUser";
-    var userPassWord = "passs";
-    function open(channelName) {
-      // channelNameをuserNameに割り当てるトリックを使う
-      userName = channelName;
-      socket = new WebSocket("wss://cloud.achex.ca/" + serviceToken);
-      return new Promise(function (okCallback, ngCallback) {
-        socket.addEventListener("open", function (event) {
-          socket.send(
-            '{"auth":"' + userName + '", "password":"' + userPassWord + '"}'
-          );
-          okCallback(true);
-        });
-      });
-    }
-
-    async function subscribe(channelName) {
-      if (!channelName) {
-        channelName = defaultChannelName;
-      }
-      await open(channelName);
-      console.log("achexModule:channelOpened");
-      function onmessage(cbFunc) {
-        socket.addEventListener("message", function (event) {
-          //					console.log('message',event);
-          const json = JSON.parse(event.data);
-          if (json.auth == "OK") {
-            SID = json.SID;
-          } else {
-            //						console.log("json.sID:",json.sID,"  thisSID:",SID);
-            if (json.sID != SID) {
-              // 自分が投げたものは返答しないことにする
-              cbFunc({
-                data: json.msg,
-                timeStamp: event.timeStamp,
-                origin: event.origin,
-                //								lastEventId: event.lastEventId
-              });
-            }
-          }
-        });
-      }
-      function send(msg) {
-        var outMsg = {
-          to: userName,
-          msg: msg,
-        };
-        outMsg = JSON.stringify(outMsg);
-        //				console.log("achexModule to send:",outMsg);
-        socket.send(outMsg);
-      }
-      return {
-        serverName: "achex",
-        set onmessage(cbf) {
-          onmessage(cbf);
-        },
-        send: send,
-      };
-    }
-    //		await open();
-
-    return {
-      //			open:open,
-      subscribe: subscribe,
-    };
-  }
 
   return {
     subscribe: relayService.subscribe,
