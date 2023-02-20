@@ -81,7 +81,7 @@ const defaultChannelName = "chirimenChannel";
 
 import { tinyWssModule } from "./tinyWssModule.js";
 import { piesocketModule } from "./piesocketModule.js";
-import {scaledroneModule} from "./scaledroneModule.js";
+import { scaledroneModule } from "./scaledroneModule.js";
 
 function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
   if (typeof window == "undefined") {
@@ -124,7 +124,6 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
     relayService = serviceName;
   }
   //	console.log("relayService:",relayService);
-
   function chirimenTestLocal() {
     var wssRelayHost = "ws://localhost:3000";
     return tinyWssModule(wssRelayHost, serviceToken, defaultChannelName);
@@ -134,7 +133,6 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
     var wssRelayHost = "wss://chirimen-web-socket-relay.herokuapp.com";
     return tinyWssModule(wssRelayHost, serviceToken, defaultChannelName);
   }
-
 
   function achexModule() {
     var socket;
