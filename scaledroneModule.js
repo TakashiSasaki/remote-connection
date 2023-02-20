@@ -52,8 +52,8 @@ History
 */
 
 function scaledroneModule(serviceToken) {
-  if(typeof serviceToken !== "string") throw "serviceToken is mandatory.";
-  
+  if (typeof serviceToken !== "string") throw "serviceToken is mandatory.";
+
   var drone, room;
   var clientId;
   var sdUrl;

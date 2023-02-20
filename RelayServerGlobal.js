@@ -51,5 +51,5 @@ History
 ================================================================================
 */
 
-import {RelayServer} from "./RelayServer.js";
+import { RelayServer } from "./RelayServer.js";
 window.RelayServer = RelayServer;
