@@ -77,7 +77,10 @@ interface  RSMessage {
 
 **/
 
-import {tinyWssModule, defaultChannelName} from "./tinyWssModule.js";
+const defaultChannelName = "chirimenChannel";
+
+import { tinyWssModule } from "./tinyWssModule.js";
+import { piesocketModule } from "./piesocketModule.js";
 
 function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
   if (typeof window == "undefined") {
@@ -121,76 +124,14 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
   }
   //	console.log("relayService:",relayService);
 
-
   function chirimenTestLocal() {
     var wssRelayHost = "ws://localhost:3000";
-    return tinyWssModule(wssRelayHost, serviceToken);
+    return tinyWssModule(wssRelayHost, serviceToken, defaultChannelName);
   }
 
   function chirimenTest() {
     var wssRelayHost = "wss://chirimen-web-socket-relay.herokuapp.com";
-    return tinyWssModule(wssRelayHost, serviceToken);
-  }
-
-
-  function piesocketModule(ClusterID) {
-    var socket;
-    if (!ClusterID) {
-      ClusterID = "demo";
-    }
-    function open(channelName) {
-      //			var channelNumber = crc16(channelName);
-      var channelNumber = channelName;
-      socket = new WebSocket(
-        "wss://" +
-          ClusterID +
-          ".piesocket.com/v3/" +
-          channelNumber +
-          "?apiKey=" +
-          serviceToken
-      );
-      return new Promise(function (okCallback, ngCallback) {
-        socket.addEventListener("open", function (event) {
-          okCallback(true);
-        });
-      });
-    }
-    async function subscribe(channelName) {
-      if (!channelName) {
-        channelName = defaultChannelName;
-      }
-      await open(channelName);
-      console.log("piesocketModule:channelOpened");
-      function onmessage(cbFunc) {
-        socket.addEventListener("message", function (event) {
-          //					console.log('message',event);
-          var json = JSON.parse(event.data);
-          cbFunc({
-            data: json.body,
-            timeStamp: event.timeStamp,
-            origin: event.origin,
-            //						lastEventId: event.lastEventId
-          });
-        });
-      }
-      function send(msg) {
-        //				console.log("sendMsg:",msg,"  typeof(msg)",typeof(msg));
-        var outMsg = { body: msg };
-        outMsg = JSON.stringify(outMsg);
-        //				console.log("sendMsg:",outMsg);
-        socket.send(outMsg);
-      }
-      return {
-        serverName: "websocket.in",
-        set onmessage(cbf) {
-          onmessage(cbf);
-        },
-        send: send,
-      };
-    }
-    return {
-      subscribe: subscribe,
-    };
+    return tinyWssModule(wssRelayHost, serviceToken, defaultChannelName);
   }
 
   function scaledroneModule() {
@@ -250,7 +191,7 @@ function RelayServer(serviceName, serviceToken, nodeWebSocketLib, OriginURL) {
     return {
       subscribe: subscribe,
     };
-  }//function scaledroneModule
+  } //function scaledroneModule
 
   function achexModule() {
     var socket;
