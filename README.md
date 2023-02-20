@@ -1,0 +1,3 @@
+- ブラウザもしくはNode.jsで動くクライアントがWebSocketリレーサーバに接続するためのライブラリ。
+- https://github.com/chirimen-oh/remote-connection からフォークしている。
+- 使用例 https://glitch.com/edit/#!/hello-websocket-chirimen
