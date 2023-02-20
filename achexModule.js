@@ -78,74 +78,73 @@ interface  RSMessage {
 **/
 
 function achexModule(serviceToken) {
-    if (typeof serviceToken !== "string") throw "serviceToken is mandatory.";
-  
-    var socket;
-    var SID; // サービスから割り付けられるセッションID
-    var userName = "chirimenUser";
-    var userPassWord = "passs";
-    function open(channelName) {
-      // channelNameをuserNameに割り当てるトリックを使う
-      userName = channelName;
-      socket = new WebSocket("wss://cloud.achex.ca/" + serviceToken);
-      return new Promise(function (okCallback, ngCallback) {
-        socket.addEventListener("open", function (event) {
-          socket.send(
-            '{"auth":"' + userName + '", "password":"' + userPassWord + '"}'
-          );
-          okCallback(true);
-        });
+  if (typeof serviceToken !== "string") throw "serviceToken is mandatory.";
+
+  var socket;
+  var SID; // サービスから割り付けられるセッションID
+  var userName = "chirimenUser";
+  var userPassWord = "passs";
+  function open(channelName) {
+    // channelNameをuserNameに割り当てるトリックを使う
+    userName = channelName;
+    socket = new WebSocket("wss://cloud.achex.ca/" + serviceToken);
+    return new Promise(function (okCallback, ngCallback) {
+      socket.addEventListener("open", function (event) {
+        socket.send(
+          '{"auth":"' + userName + '", "password":"' + userPassWord + '"}'
+        );
+        okCallback(true);
       });
-    } //function open
-  
-    async function subscribe(channelName) {
-      if (typeof channelName !== "string") throw "channelName is mandatory.";
-      await open(channelName);
-      console.log("achexModule:channelOpened");
-      function onmessage(cbFunc) {
-        socket.addEventListener("message", function (event) {
-          //					console.log('message',event);
-          const json = JSON.parse(event.data);
-          if (json.auth == "OK") {
-            SID = json.SID;
-          } else {
-            //						console.log("json.sID:",json.sID,"  thisSID:",SID);
-            if (json.sID != SID) {
-              // 自分が投げたものは返答しないことにする
-              cbFunc({
-                data: json.msg,
-                timeStamp: event.timeStamp,
-                origin: event.origin,
-                //								lastEventId: event.lastEventId
-              });
-            }
+    });
+  } //function open
+
+  async function subscribe(channelName) {
+    if (typeof channelName !== "string") throw "channelName is mandatory.";
+    await open(channelName);
+    console.log("achexModule:channelOpened");
+    function onmessage(cbFunc) {
+      socket.addEventListener("message", function (event) {
+        //					console.log('message',event);
+        const json = JSON.parse(event.data);
+        if (json.auth == "OK") {
+          SID = json.SID;
+        } else {
+          //						console.log("json.sID:",json.sID,"  thisSID:",SID);
+          if (json.sID != SID) {
+            // 自分が投げたものは返答しないことにする
+            cbFunc({
+              data: json.msg,
+              timeStamp: event.timeStamp,
+              origin: event.origin,
+              //								lastEventId: event.lastEventId
+            });
           }
-        });
-      }
-      function send(msg) {
-        var outMsg = {
-          to: userName,
-          msg: msg,
-        };
-        outMsg = JSON.stringify(outMsg);
-        //				console.log("achexModule to send:",outMsg);
-        socket.send(outMsg);
-      }
-      return {
-        serverName: "achex",
-        set onmessage(cbf) {
-          onmessage(cbf);
-        },
-        send: send,
+        }
+      });
+    }
+    function send(msg) {
+      var outMsg = {
+        to: userName,
+        msg: msg,
       };
-    } //async function subscribe
-    //		await open();
-  
+      outMsg = JSON.stringify(outMsg);
+      //				console.log("achexModule to send:",outMsg);
+      socket.send(outMsg);
+    }
     return {
-      //			open:open,
-      subscribe: subscribe,
+      serverName: "achex",
+      set onmessage(cbf) {
+        onmessage(cbf);
+      },
+      send: send,
     };
-  }
-  
-  export { achexModule };
-  
+  } //async function subscribe
+  //		await open();
+
+  return {
+    //			open:open,
+    subscribe: subscribe,
+  };
+}
+
+export { achexModule };
