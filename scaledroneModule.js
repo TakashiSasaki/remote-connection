@@ -52,64 +52,63 @@ History
 */
 
 function scaledroneModule(serviceToken) {
-    if(typeof serviceToken !== "string") throw "serviceToken is mandatory.";
-    
-    var drone, room;
-    var clientId;
-    var sdUrl;
-    function open(channelName) {
-      drone = new Scaledrone(serviceToken);
-      room = drone.subscribe(channelName);
-      return new Promise(function (okCallback, ngCallback) {
-        room.on("open", function (error) {
-          if (error) {
-            ngCallback(error);
-          }
-          clientId = drone.clientId;
-          sdUrl = new URL(drone.connection.url);
-          //					console.log("connected: clientId:",clientId);
-          okCallback(true);
-        });
+  if(typeof serviceToken !== "string") throw "serviceToken is mandatory.";
+  
+  var drone, room;
+  var clientId;
+  var sdUrl;
+  function open(channelName) {
+    drone = new Scaledrone(serviceToken);
+    room = drone.subscribe(channelName);
+    return new Promise(function (okCallback, ngCallback) {
+      room.on("open", function (error) {
+        if (error) {
+          ngCallback(error);
+        }
+        clientId = drone.clientId;
+        sdUrl = new URL(drone.connection.url);
+        //					console.log("connected: clientId:",clientId);
+        okCallback(true);
+      });
+    });
+  }
+  async function subscribe(channelName) {
+    if (typeof channelName !== "string") throw "channelName is mandatory.";
+
+    await open(channelName);
+    console.log("scaledroneModule:channelOpened");
+    function onmessage(cbFunc) {
+      room.on("message", function (message) {
+        //					console.log('Received data:', message);
+        // 自分が送ったものは返さないようにね
+        if (message.clientId != clientId) {
+          cbFunc({
+            data: message.data,
+            timeStamp: message.timestamp,
+            origin: sdUrl.origin,
+            //							lastEventId: message.id
+          });
+        }
       });
     }
-    async function subscribe(channelName) {
-      if (typeof channelName !== "string") throw "channelName is mandatory.";
-  
-      await open(channelName);
-      console.log("scaledroneModule:channelOpened");
-      function onmessage(cbFunc) {
-        room.on("message", function (message) {
-          //					console.log('Received data:', message);
-          // 自分が送ったものは返さないようにね
-          if (message.clientId != clientId) {
-            cbFunc({
-              data: message.data,
-              timeStamp: message.timestamp,
-              origin: sdUrl.origin,
-              //							lastEventId: message.id
-            });
-          }
-        });
-      }
-      function send(msg) {
-        drone.publish({
-          room: channelName,
-          //					message: {body:msg}
-          message: msg,
-        });
-      }
-      return {
-        serverName: "scaledrone",
-        set onmessage(cbf) {
-          onmessage(cbf);
-        },
-        send: send,
-      };
+    function send(msg) {
+      drone.publish({
+        room: channelName,
+        //					message: {body:msg}
+        message: msg,
+      });
     }
     return {
-      subscribe: subscribe,
+      serverName: "scaledrone",
+      set onmessage(cbf) {
+        onmessage(cbf);
+      },
+      send: send,
     };
-  } //function scaledroneModule
-  
-  export { scaledroneModule };
-  
+  }
+  return {
+    subscribe: subscribe,
+  };
+} //function scaledroneModule
+
+export { scaledroneModule };
